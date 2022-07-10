@@ -3,7 +3,8 @@ Implementation of QuadTree data structure
 """
 
 import numpy as np
-
+from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
 
 class Point:
     def __init__(self, x, y):
@@ -107,10 +108,31 @@ class QuadTree:
                 self.southwest.InsertPoint(point)
             return
 
+    def DrawOutline(self, ax):
+        """
+        Draw edges of QuadTree for visualization
+        ax (plt.subplots()): axis to draw onto
+        """
+        # Rectangle will act as edge of QuadTree
+        qt_edge = mpatches.Rectangle(
+            (self.boundary.x - self.boundary.w, self.boundary.y - self.boundary.h),
+            self.boundary.w*2,
+            self.boundary.h*2,
+            lw=1, fill=False, ec="w"
+        )
+        ax.add_patch(qt_edge)
+
+        # If the QuadTree has divided, draw the edges of the daughter nodes also
+        if self.divided:
+            self.northeast.DrawOutline(ax)
+            self.northwest.DrawOutline(ax)
+            self.southeast.DrawOutline(ax)
+            self.southwest.DrawOutline(ax)
+        return
+
 
 if __name__ == "__main__":
-    # Test
-    # Define points in space and QuadTree 
+    # Define points in space and QuadTree
     x_axis = np.linspace(0, 10, 100)
     y_axis = np.linspace(0, 10, 100)
     rect = Rectangle(x=0, y=0, w=10, h=10)
