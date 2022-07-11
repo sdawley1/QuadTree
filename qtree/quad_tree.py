@@ -1,13 +1,11 @@
 """
 Implementation of QuadTree data structure
 """
-
 import numpy as np
-from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
 
 class Point:
-    def __init__(self, x, y):
+    def __init__(self, x, y, name=""):
         """
         Point
         x (float): x coordinate of point
@@ -15,6 +13,7 @@ class Point:
         """
         self.x = x
         self.y = y
+        self.name = name # Used for classifying points uniquely
         return
 
 
@@ -34,7 +33,7 @@ class Rectangle:
         self.h = h
         return
 
-    def ContainsPoint(self, pt):
+    def ContainsPoint(self, pt) -> bool:
         """
         Test if bounding region contains Point pt
         point (Point): Point being tested
@@ -42,7 +41,7 @@ class Rectangle:
         """
         return self.x - self.w < pt.x < self.x + self.w and self.y - self.h < pt.y < self.y + self.h
 
-    def IntersectsRegion(self, region):
+    def IntersectsRegion(self, region) -> bool:
         """
         Test if the rectangle intersects a given region
         :param region: (Rectangle) Region to test
@@ -55,7 +54,7 @@ class Rectangle:
             region.y + region.h < self.y - self.h
         )
 
-    def DrawOutline(self, ax):
+    def DrawOutline(self, ax) -> None:
         """
         Draw edges of QuadTree for visualization
         ax (plt.subplots()): axis to draw onto
@@ -81,7 +80,7 @@ class QuadTree:
         self.divided = False # Whether or not this QuadTree is divided already
         return
 
-    def Subdivide(self):
+    def _subdivide(self) -> None:
         """
         Subdivide the quad tree
         """
@@ -107,7 +106,7 @@ class QuadTree:
         self.divided = True
         return
 
-    def InsertPoint(self, point):
+    def InsertPoint(self, point) -> None:
         """
         Insert point into the QuadTree
         If the QuadTree is already at maximum capacity, subdivide the QuadTree
@@ -121,7 +120,7 @@ class QuadTree:
                 self.points.append(point)
             else:
                 if not self.divided:
-                    self.Subdivide()
+                    self._subdivide()
                 #
                 self.northeast.InsertPoint(point)
                 self.northwest.InsertPoint(point)
@@ -129,7 +128,7 @@ class QuadTree:
                 self.southwest.InsertPoint(point)
             return
 
-    def DrawOutline(self, ax):
+    def DrawOutline(self, ax) -> None:
         """
         Draw edges of QuadTree for visualization
         ax (plt.subplots()): axis to draw onto
@@ -151,7 +150,7 @@ class QuadTree:
             self.southwest.DrawOutline(ax)
         return
 
-    def QueryRegion(self, region, found=[]):
+    def QueryRegion(self, region, found=[]) -> list:
         """
         Find points within a given region
         :param found: (array) List of points found within specified region
@@ -188,8 +187,7 @@ if __name__ == "__main__":
 
     # Inserting points into the QuadTree
     for x, y in zip(x_axis, y_axis):
-        point = Point(x, y)
-        qt.InsertPoint(point)
+        qt.InsertPoint(Point(x, y))
 
 
 
