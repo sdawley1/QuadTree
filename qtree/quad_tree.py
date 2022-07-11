@@ -34,17 +34,38 @@ class Rectangle:
         self.h = h
         return
 
-    def ContainsPoint(self, point):
+    def ContainsPoint(self, pt):
         """
-        Test if bounding region contains point p
+        Test if bounding region contains Point pt
         point (Point): Point being tested
         Returns a bool. True if point is within region, False otherwise
         """
-        if self.x - self.w < point.x < self.x + self.w:
-            if self.y - self.h < point.y < self.y + self.h:
-                return True
-        else:
-            return False
+        return self.x - self.w < pt.x < self.x + self.w and self.y - self.h < pt.y < self.y + self.h
+
+    def IntersectsRegion(self, region):
+        """
+        Test if the rectangle intersects a given region
+        :param region: (Rectangle) Region to test
+        :return: Bool
+        """
+        return not (
+            region.x - region.w > self.x + self.w or
+            region.x + region.w < self.x - self.w or
+            region.y - region.h > self.y + self.h or
+            region.y + region.h < self.y - self.h
+        )
+
+    def DrawOutline(self, ax):
+        """
+        Draw edges of QuadTree for visualization
+        ax (plt.subplots()): axis to draw onto
+        """
+        # Rectangle will act as edge of QuadTree
+        edge = mpatches.Rectangle(
+            (self.x - self.w, self.y - self.h), self.w*2, self.h*2, lw=1, fill=False, ec="#0CFF00"
+        )
+        ax.add_patch(edge)
+        return
 
 
 class QuadTree:
@@ -118,7 +139,7 @@ class QuadTree:
             (self.boundary.x - self.boundary.w, self.boundary.y - self.boundary.h),
             self.boundary.w*2,
             self.boundary.h*2,
-            lw=1, fill=False, ec="w"
+            lw=0.2, fill=False, ec="w"
         )
         ax.add_patch(qt_edge)
 
@@ -129,6 +150,33 @@ class QuadTree:
             self.southeast.DrawOutline(ax)
             self.southwest.DrawOutline(ax)
         return
+
+    def QueryRegion(self, region, found=[]):
+        """
+        Find points within a given region
+        :param found: (array) List of points found within specified region
+        :param region: (Rectangle) Region to query points
+        :return:
+        """
+        # Determine if any points are found in region already
+        if not found:
+            found = []
+
+        # Determine if region and QuadTree overlap
+        if not self.boundary.IntersectsRegion(region):
+            return found
+        else:
+            # Iterate through all points within QuadTree and determine if they are also within region of intersection
+            for p in self.points:
+                if region.ContainsPoint(p):
+                    found.append(p)
+            # If the region has subdivided, determine which points are within the regions spawned from this node
+            if self.divided:
+                self.northeast.QueryRegion(region, found)
+                self.northwest.QueryRegion(region, found)
+                self.southeast.QueryRegion(region, found)
+                self.southwest.QueryRegion(region, found)
+            return found
 
 
 if __name__ == "__main__":
