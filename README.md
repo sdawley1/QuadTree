@@ -12,3 +12,8 @@ This is an implementation of the [QuadTree](https://en.wikipedia.org/wiki/Quadtr
 
 ![Successful query of rectangular region w/ QuadTree displayed](https://github.com/sdawley1/potential-octo-funicular/blob/main/images/query_success_outlines.png?raw=true)
 
+
+## VT Schools Images
+![Two closest schools in VT](https://github.com/sdawley1/potential-octo-funicular/blob/main/images/closest_schools.png?raw=true)
+![Two closest schools in VT 2](https://github.com/sdawley1/potential-octo-funicular/blob/main/images/closest_schools_zoom.png?raw=true)
+
