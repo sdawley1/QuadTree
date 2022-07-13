@@ -100,9 +100,9 @@ def drawVT() -> None:
 
     # Draw points
     X, Y = [p.x for p in get_points(df)], [p.y for p in get_points(df)]
-    ax.scatter(X, Y, c="r", s=4)
+    ax.scatter(X, Y, c="r", s=8)
     # Highlight closest schools
-    ax.scatter([closest[1].x, closest[2].x], [closest[1].y, closest[2].y], c="#0CFF00", s=4)
+    ax.scatter([closest[1].x, closest[2].x], [closest[1].y, closest[2].y], c="#0CFF00", s=8)
 
     # Draw QuadTree
     qt.DrawOutline(ax)
@@ -117,5 +117,5 @@ def drawVT() -> None:
     return
 
 if __name__ == "__main__":
-    drawVT()
+    draw()
 

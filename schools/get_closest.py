@@ -27,7 +27,7 @@ def load_VT_schools(filename) -> pd.DataFrame():  # What
     """
     return pd.read_csv(filename, sep=",")
 
-def GetClosestSchools(qt, schools):
+def GetClosestSchools(qt, schools) -> tuple:
     """
     Get two closest schools using QuadTree
     :param qt: (QuadTree) QuadTree to get schools from
