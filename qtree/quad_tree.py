@@ -1,74 +1,11 @@
 """
 Implementation of QuadTree data structure
 """
+from dis import dis
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-
-class Point:
-    def __init__(self, x: float, y: float, name: str="") -> None:
-        """
-        Point
-        x (float): x coordinate of point
-        y (float): y coordinate of point
-        """
-        self.x = x
-        self.y = y
-        self.name = name # Used for classifying points uniquely
-        return
-
-    def __repr__(self) -> str:
-        return f"({self.x}, {self.y})"
-
-
-class Rectangle:
-    def __init__(self, x: float, y: float, w: float, h: float) -> None:
-        """
-        Rectangle. Used for defining bounding region of QuadTree
-        x (float): x coordinate of center of rectangle
-        y (float): y coordinate of center of rectangle
-        w (float): half-width of rectangle
-        h (float): half-height of rectangle
-        """
-        self.x = x
-        self.y = y
-        # (x,y) define the center of the rectangle in Cartesian coordinates
-        self.w = w
-        self.h = h
-        return
-
-    def ContainsPoint(self, pt: Point) -> bool:
-        """
-        Test if bounding region contains Point pt
-        point (Point): Point being tested
-        Returns a bool. True if point is within region, False otherwise
-        """
-        return self.x - self.w < pt.x < self.x + self.w and self.y - self.h < pt.y < self.y + self.h
-
-    def IntersectsRegion(self, region: "Rectangle") -> bool:
-        """
-        Test if the rectangle intersects a given region
-        :param region: (Rectangle) Region to test
-        :return: Bool
-        """
-        return not (
-            region.x - region.w > self.x + self.w or
-            region.x + region.w < self.x - self.w or
-            region.y - region.h > self.y + self.h or
-            region.y + region.h < self.y - self.h
-        )
-
-    def DrawOutline(self, ax: plt.axis) -> None:
-        """
-        Draw edges of QuadTree for visualization
-        ax (plt.subplots()): axis to draw onto
-        """
-        # Rectangle will act as edge of QuadTree
-        edge = mpatches.Rectangle(
-            (self.x - self.w, self.y - self.h), self.w*2, self.h*2, lw=1, fill=False, ec="#0CFF00"
-        )
-        ax.add_patch(edge)
-        return
+from geometry.shapes import Particle, Rectangle
 
 
 class QuadTree:
@@ -81,8 +18,15 @@ class QuadTree:
         self.boundary = boundary # boundary of region
         self.capacity = capacity # Max number of points allowed in region
         self.points = [] # Points within this region
+        self.daughters = [] # Daughter nodes
         self.divided = False # Whether or not this QuadTree is divided already
         return
+
+    def __repr__(self):
+        """
+        Get representation of QuadTree
+        """
+        return f"QuadTree spawned at ({self.boundary.x}, {self.boundary.y}) contains {len(self.points)} points"
 
     def _subdivide(self) -> None:
         """
@@ -97,27 +41,50 @@ class QuadTree:
         # Define northeast region of QuadTree
         ne = Rectangle(x + w/2, y + h/2, w/2, h/2)
         self.northeast = QuadTree(ne, self.capacity)
+        self.daughters.append(self.northeast)
         # Define northwest region of QuadTree
         nw = Rectangle(x - w/2, y + h/2, w/2, h/2)
         self.northwest = QuadTree(nw, self.capacity)
+        self.daughters.append(self.northwest)
         # Define southeast region of QuadTree
         se = Rectangle(x + w/2, y - h/2, w/2, h/2)
         self.southeast = QuadTree(se, self.capacity)
+        self.daughters.append(self.southeast)
         # Define southwest region of QuadTree
         sw = Rectangle(x - w/2, y - h/2, w/2, h/2)
         self.southwest = QuadTree(sw, self.capacity)
+        self.daughters.append(self.southwest)
         # Set bool to true
         self.divided = True
+        # Add daughter nodes to list
         return
 
-    def InsertPoint(self, point: Point) -> None:
+    def quad_tree_display(self) -> dict:
+        """
+        Dictionary of all QuadTree nodes for display
+        """
+        QT = {}
+        for qtree in self.daughters:
+            if qtree.divided:
+                #try:
+                qtree.quad_tree_display()
+                #except AttributeError:
+                    #print(f"No more daughter nodes!")
+            else:
+                QT[f"{qtree}"] = qtree.points
+                print(f"{qtree}")
+                for p in qtree.points:
+                    print(f"    Point at {(p.x, p.y)}")
+        return QT
+
+    def insert_point(self, point: Particle) -> None:
         """
         Insert point into the QuadTree
         If the QuadTree is already at maximum capacity, subdivide the QuadTree
-        point (Point): Point being inserted into QuadTree
+        point (Particle): Point being inserted into QuadTree
         """
         # Check if point is within bounding region
-        if not self.boundary.ContainsPoint(point):
+        if not self.boundary.contains_point(point):
             return
         else:
             if len(self.points) < self.capacity:
@@ -125,14 +92,14 @@ class QuadTree:
             else:
                 if not self.divided:
                     self._subdivide()
-                #
-                self.northeast.InsertPoint(point)
-                self.northwest.InsertPoint(point)
-                self.southeast.InsertPoint(point)
-                self.southwest.InsertPoint(point)
+                # Insert points to daughter nodes
+                self.northeast.insert_point(point)
+                self.northwest.insert_point(point)
+                self.southeast.insert_point(point)
+                self.southwest.insert_point(point)
             return
 
-    def DrawOutline(self, ax: plt.axis) -> None:
+    def draw_outline(self, ax: plt.axis, c: str="w") -> None:
         """
         Draw edges of QuadTree for visualization
         ax (plt.subplots()): axis to draw onto
@@ -142,19 +109,19 @@ class QuadTree:
             (self.boundary.x - self.boundary.w, self.boundary.y - self.boundary.h),
             self.boundary.w*2,
             self.boundary.h*2,
-            lw=0.2, fill=False, ec="w"
+            lw=0.2, fill=False, ec=c
         )
         ax.add_patch(qt_edge)
 
         # If the QuadTree has divided, draw the edges of the daughter nodes also
         if self.divided:
-            self.northeast.DrawOutline(ax)
-            self.northwest.DrawOutline(ax)
-            self.southeast.DrawOutline(ax)
-            self.southwest.DrawOutline(ax)
+            self.northeast.draw_outline(ax)
+            self.northwest.draw_outline(ax)
+            self.southeast.draw_outline(ax)
+            self.southwest.draw_outline(ax)
         return
 
-    def QueryRegion(self, region: Rectangle, found: list=[]) -> list:
+    def query_region(self, region: Particle or Rectangle, found: list=[]) -> list:
         """
         Find points within a given region
         :param found: (array) List of points found within specified region
@@ -164,36 +131,34 @@ class QuadTree:
         # Determine if any points are found in region already
         if not found:
             found = []
-
         # Determine if region and QuadTree overlap
-        if not self.boundary.IntersectsRegion(region):
+        if not self.boundary.intersects_region(region):
             return found
         else:
             # Iterate through all points within QuadTree and determine if they are also within region of intersection
             for p in self.points:
-                if region.ContainsPoint(p):
+                if region.contains_point(p):
                     found.append(p)
             # If the region has subdivided, determine which points are within the regions spawned from this node
             if self.divided:
-                self.northeast.QueryRegion(region, found)
-                self.northwest.QueryRegion(region, found)
-                self.southeast.QueryRegion(region, found)
-                self.southwest.QueryRegion(region, found)
+                self.northeast.query_region(region, found)
+                self.northwest.query_region(region, found)
+                self.southeast.query_region(region, found)
+                self.southwest.query_region(region, found)
             return found
 
 
 if __name__ == "__main__":
     # Define points in space and QuadTree
-    x_axis = np.linspace(0, 10, 100)
-    y_axis = np.linspace(0, 10, 100)
+    a, b = range(20), range(20)
     rect = Rectangle(x=0, y=0, w=10, h=10)
     qt = QuadTree(boundary=rect, capacity=4)
-
     # Inserting points into the QuadTree
-    for x, y in zip(x_axis, y_axis):
-        qt.InsertPoint(Point(x, y))
+    for x, y in zip(a, b):
+        qt.insert_point(Particle(x, y))
 
-    print(qt.points)
+
+    
 
 
 

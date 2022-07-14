@@ -8,7 +8,7 @@ import sys
 import time
 
 sys.path.insert(0, "..")
-from qtree.quad_tree import Point, QuadTree, Rectangle
+from qtree.quad_tree import Particle, QuadTree, Rectangle
 
 def get_points(df) -> list:
     """
@@ -18,7 +18,7 @@ def get_points(df) -> list:
     """
     points = []
     for x, y in zip(df["X"], df["Y"]):
-        points.append(Point(x, y))
+        points.append(Particle(x, y))
     return points
 
 def load_VT_schools(filename) -> pd.DataFrame():  # What
@@ -27,7 +27,7 @@ def load_VT_schools(filename) -> pd.DataFrame():  # What
     """
     return pd.read_csv(filename, sep=",")
 
-def GetClosestSchools(qt, schools) -> tuple:
+def get_closest_schools(qt, schools) -> tuple:
     """
     Get two closest schools using QuadTree
     :param qt: (QuadTree) QuadTree to get schools from
@@ -37,12 +37,11 @@ def GetClosestSchools(qt, schools) -> tuple:
     running_min = (np.inf, None, None)
     for school in schools:
         if qt.boundary.ContainsPoint(school):  # Test if point is contained within QuadTree boundary
-            for spt in qt.QueryRegion(qt.boundary):  # Find all points within the QuadTree boundary
-                for ospt in qt.QueryRegion(qt.boundary):  # Find all other points within the QuadTree boundary
-                    if spt != ospt:
-                        eu_dist = math.dist((spt.x, spt.y), (ospt.x, ospt.y))
+            for other_school in qt.QueryRegion(qt.boundary):  # Find all points within the QuadTree boundary
+                    if school != other_school:
+                        eu_dist = math.dist((school.x, school.y), (other_school.x, other_school.y))
                         if eu_dist < running_min[0]:
-                            running_min = (eu_dist, spt, ospt)
+                            running_min = (eu_dist, school, other_school)
 
     return running_min
 
@@ -75,10 +74,10 @@ def closest_main() -> tuple:
     # Define and add points to QuadTree
     qt = QuadTree(boundary, capacity=4)
     for school in schools:
-        qt.InsertPoint(school)
+        qt.insert_point(school)
 
     # Main loop to get closest points
-    closest = GetClosestSchools(qt, schools)
+    closest = get_closest_schools(qt, schools)
 
     t_end = time.process_time()
     return closest, (t_end - t_start)
