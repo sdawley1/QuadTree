@@ -1,4 +1,4 @@
-# potential-octo-funicular
+# QuadTree
 
 This is an implementation of the [QuadTree](https://en.wikipedia.org/wiki/Quadtree) data structure based on a video made by [Daniel Shiffman](https://shiffman.net/), a.k.a., [The Coding Train](https://thecodingtrain.com/). QuadTrees have a myriad of applications, including image processing, collision detection, and even simulation Conway's game of life. I'm hoping to explore most of these at some point within this repository.
 
